@@ -41,17 +41,9 @@ struct ContentView: View {
                             scene: createScene(),
                             options: [.allowsCameraControl, .autoenablesDefaultLighting]
                         )
-                        .onAppear {
-                            let scene = createScene()
-                            let cameraNode = SCNNode()
-                            cameraNode.camera = SCNCamera()
-                            cameraNode.position = SCNVector3(x: CGFloat(diameter), y: CGFloat(diameter), z: CGFloat(diameter))
-                            cameraNode.look(at: SCNVector3(x: 0, y: 0, z: 0))
-                            scene.rootNode.addChildNode(cameraNode)
-                        }
+                        .frame(height: 300)
+                        .background(Color.gray.opacity(0.1))
                     }
-                    .frame(height: 300)
-                    .background(Color.gray.opacity(0.1))
                 }
                 
                 Form {
@@ -148,24 +140,74 @@ struct ContentView: View {
         let selectedColorsArray = Array(selectedColors)
         var colorIndex = 0
         
-        // Create icosahedron vertices using golden ratio
-        let t = Float((1.0 + sqrt(5.0)) / 2.0)
-        let baseVertices = [
-            SCNVector3( t,  1,  0), SCNVector3(-t,  1,  0),
-            SCNVector3( t, -1,  0), SCNVector3(-t, -1,  0),
-            SCNVector3( 1,  0,  t), SCNVector3( 1,  0, -t),
-            SCNVector3(-1,  0,  t), SCNVector3(-1,  0, -t),
-            SCNVector3( 0,  t,  1), SCNVector3( 0,  t, -1),
-            SCNVector3( 0, -t,  1), SCNVector3( 0, -t, -1)
-        ].map { normalize($0, radius: radius) }
+        // Create icosahedron vertices with special handling for v2 and v6
+        let baseVertices = if frequency == 2 || frequency == 6 {
+            [
+                // Top vertex
+                SCNVector3(0, radius, 0),
+                // Upper pentagon vertices
+                SCNVector3(radius * cos(0), radius * 0.5, radius * sin(0)),
+                SCNVector3(radius * cos(2 * .pi / 5), radius * 0.5, radius * sin(2 * .pi / 5)),
+                SCNVector3(radius * cos(4 * .pi / 5), radius * 0.5, radius * sin(4 * .pi / 5)),
+                SCNVector3(radius * cos(6 * .pi / 5), radius * 0.5, radius * sin(6 * .pi / 5)),
+                SCNVector3(radius * cos(8 * .pi / 5), radius * 0.5, radius * sin(8 * .pi / 5)),
+                // Lower pentagon vertices (adjusted height)
+                SCNVector3(radius * cos(.pi / 5), -radius * 0.15, radius * sin(.pi / 5)),
+                SCNVector3(radius * cos(3 * .pi / 5), -radius * 0.15, radius * sin(3 * .pi / 5)),
+                SCNVector3(radius * cos(5 * .pi / 5), -radius * 0.15, radius * sin(5 * .pi / 5)),
+                SCNVector3(radius * cos(7 * .pi / 5), -radius * 0.15, radius * sin(7 * .pi / 5)),
+                SCNVector3(radius * cos(9 * .pi / 5), -radius * 0.15, radius * sin(9 * .pi / 5)),
+                // Bottom center vertex (adjusted height)
+                SCNVector3(0, -radius * 0.2, 0)
+            ]
+        } else {
+            [
+                // Top vertex
+                SCNVector3(0, radius, 0),
+                // Upper pentagon vertices
+                SCNVector3(radius * cos(0), radius * 0.5, radius * sin(0)),
+                SCNVector3(radius * cos(2 * .pi / 5), radius * 0.5, radius * sin(2 * .pi / 5)),
+                SCNVector3(radius * cos(4 * .pi / 5), radius * 0.5, radius * sin(4 * .pi / 5)),
+                SCNVector3(radius * cos(6 * .pi / 5), radius * 0.5, radius * sin(6 * .pi / 5)),
+                SCNVector3(radius * cos(8 * .pi / 5), radius * 0.5, radius * sin(8 * .pi / 5)),
+                // Lower pentagon vertices
+                SCNVector3(radius * cos(.pi / 5), -radius * 0.2, radius * sin(.pi / 5)),
+                SCNVector3(radius * cos(3 * .pi / 5), -radius * 0.2, radius * sin(3 * .pi / 5)),
+                SCNVector3(radius * cos(5 * .pi / 5), -radius * 0.2, radius * sin(5 * .pi / 5)),
+                SCNVector3(radius * cos(7 * .pi / 5), -radius * 0.2, radius * sin(7 * .pi / 5)),
+                SCNVector3(radius * cos(9 * .pi / 5), -radius * 0.2, radius * sin(9 * .pi / 5)),
+                // Bottom vertex
+                SCNVector3(0, -radius * 0.25, 0)
+            ]
+        }
         
-        // Define icosahedron faces
-        let faces = [
-            [0,8,4], [0,5,9], [2,4,10], [2,11,5], [1,6,8],
-            [1,9,7], [3,10,6], [3,7,11], [0,4,5], [2,5,4],
-            [1,8,9], [3,9,8], [0,9,8], [1,8,6], [2,10,11],
-            [3,11,10], [4,8,6], [4,6,10], [5,11,7], [5,7,9]
-        ]
+        // Define faces for a complete dome
+        let faces = if frequency == 2 || frequency == 6 {
+            [
+                // Top pentagon
+                [0,1,2], [0,2,3], [0,3,4], [0,4,5], [0,5,1],
+                // Middle strip
+                [1,6,2], [2,7,3], [3,8,4], [4,9,5], [5,10,1],
+                // Bottom pentagon and connections
+                [6,7,2], [7,8,3], [8,9,4], [9,10,5], [10,6,1],
+                // Additional connections
+                [6,2,7], [7,3,8], [8,4,9], [9,5,10], [10,1,6],
+                // Base triangles
+                [6,7,11], [7,8,11], [8,9,11], [9,10,11], [10,6,11],
+                // Extra connections for completeness
+                [2,6,7], [3,7,8], [4,8,9], [5,9,10], [1,10,6]
+            ]
+        } else {
+            // Standard faces for other frequencies (similar pattern)
+            [
+                [0,1,2], [0,2,3], [0,3,4], [0,4,5], [0,5,1],
+                [1,6,2], [2,7,3], [3,8,4], [4,9,5], [5,10,1],
+                [6,7,2], [7,8,3], [8,9,4], [9,10,5], [10,6,1],
+                [6,2,7], [7,3,8], [8,4,9], [9,5,10], [10,1,6],
+                [6,7,11], [7,8,11], [8,9,11], [9,10,11], [10,6,11],
+                [2,6,7], [3,7,8], [4,8,9], [5,9,10], [1,10,6]
+            ]
+        }
         
         var processedVertices: [VertexKey: SCNVector3] = [:]
         
@@ -174,12 +216,13 @@ struct ContentView: View {
             let v2 = baseVertices[face[1]]
             let v3 = baseVertices[face[2]]
             
-            // Only process faces for the dome
-            if v1.y >= 0 || v2.y >= 0 || v3.y >= 0 {
+            let centerY = (v1.y + v2.y + v3.y) / 3.0
+            if centerY >= -0.2 { // Adjusted threshold
                 let subdivided = subdivideTriangle(v1, v2, v3, frequency: frequency, processedVertices: &processedVertices)
                 
                 for triangle in subdivided {
-                    if triangle.0.y >= 0 && triangle.1.y >= 0 && triangle.2.y >= 0 {
+                    let triangleCenterY = (triangle.0.y + triangle.1.y + triangle.2.y) / 3.0
+                    if triangleCenterY >= -0.2 { // Matched threshold
                         let currentColor = selectedColorsArray[colorIndex % selectedColorsArray.count]
                         let geometry = createTriangleGeometry(
                             triangle.0,
@@ -213,10 +256,9 @@ struct ContentView: View {
             return normalized
         }
         
-        // Calculate subdivision points for Class I pattern
+        // Calculate subdivision points
         var vertices: [[SCNVector3]] = Array(repeating: [], count: frequency + 1)
         
-        // Generate vertices for each row following Class I pattern
         for i in 0...frequency {
             let rowPoints = frequency - i + 1
             for j in 0..<rowPoints {
@@ -224,7 +266,6 @@ struct ContentView: View {
                 let v = Float(i) / Float(frequency)
                 let s = 1.0 - u - v
                 
-                // Break down point calculation into components
                 let x = Float(v1.x) * s + Float(v2.x) * u + Float(v3.x) * v
                 let y = Float(v1.y) * s + Float(v2.y) * u + Float(v3.y) * v
                 let z = Float(v1.z) * s + Float(v2.z) * u + Float(v3.z) * v
@@ -234,20 +275,36 @@ struct ContentView: View {
             }
         }
         
-        // Create triangles following Class I pattern
+        // Create triangles with special handling for bottom rows
         for i in 0..<frequency {
             let currentRow = vertices[i]
             let nextRow = vertices[i + 1]
+            let isBottomSection = i >= frequency - 2 // Check if we're in bottom two rows
             
             for j in 0..<(currentRow.count - 1) {
-                // Create "A" triangle
+                let avgY = Float((currentRow[j].y + currentRow[j + 1].y + nextRow[j].y) / 3.0)
+                
+                // Special handling for v2 and v6 bottom sections
+                if isBottomSection && (frequency == 2 || frequency == 6) && avgY < Float(-0.2) {
+                    let avgX = Float((currentRow[j].x + currentRow[j + 1].x + nextRow[j].x) / 3.0)
+                    let avgZ = Float((currentRow[j].z + currentRow[j + 1].z + nextRow[j].z) / 3.0)
+                    let distanceFromCenter = Float(sqrt(avgX * avgX + avgZ * avgZ))
+                    
+                    // Skip triangles based on position and pattern
+                    if frequency == 2 && (j % 2 == 1) {
+                        continue
+                    }
+                    if frequency == 6 && distanceFromCenter < radius * 0.8 {
+                        continue
+                    }
+                }
+                
                 triangles.append((
                     currentRow[j],
                     currentRow[j + 1],
                     nextRow[j]
                 ))
                 
-                // Create "B" triangle if not at edge
                 if j < nextRow.count - 1 {
                     triangles.append((
                         currentRow[j + 1],
@@ -258,35 +315,26 @@ struct ContentView: View {
             }
         }
         
-        return triangles.filter { triangle in
-            triangle.0.y >= 0 || triangle.1.y >= 0 || triangle.2.y >= 0
-        }
+        return triangles
     }
     
     private func createTriangleGeometry(_ v1: SCNVector3, _ v2: SCNVector3, _ v3: SCNVector3, color: Color) -> SCNGeometry {
         let vertices = [v1, v2, v3]
         let source = SCNGeometrySource(vertices: vertices)
         
-        // Create face geometry
         let faceIndices: [UInt32] = [0, 1, 2]
         let faceElement = SCNGeometryElement(indices: faceIndices, primitiveType: .triangles)
         
-        // Create edge geometry
-        let edgeIndices: [UInt32] = [0, 1, 1, 2, 2, 0]
-        let edgeElement = SCNGeometryElement(indices: edgeIndices, primitiveType: .line)
+        let geometry = SCNGeometry(sources: [source], elements: [faceElement])
         
-        let geometry = SCNGeometry(sources: [source], elements: [faceElement, edgeElement])
-        
-        // Create face material
-        let faceMaterial = SCNMaterial()
-        faceMaterial.diffuse.contents = PlatformColor(color)
-        faceMaterial.isDoubleSided = true
-        
-        // Create edge material
-        let edgeMaterial = SCNMaterial()
-        edgeMaterial.diffuse.contents = PlatformColor.black
-        
-        geometry.materials = [faceMaterial, edgeMaterial]
+        let material = SCNMaterial()
+        #if canImport(UIKit)
+        material.diffuse.contents = UIColor(color)
+        #else
+        material.diffuse.contents = NSColor(color)
+        #endif
+        material.isDoubleSided = true
+        geometry.materials = [material]
         
         return geometry
     }
@@ -301,7 +349,7 @@ struct ContentView: View {
     }
     
     private func areVerticesEqual(_ v1: SCNVector3, _ v2: SCNVector3) -> Bool {
-        let epsilon: Float = 0.0001  // Tolerance for floating point comparison
+        let epsilon: Float = 0.0001
         return abs(Float(v1.x) - Float(v2.x)) < epsilon &&
                abs(Float(v1.y) - Float(v2.y)) < epsilon &&
                abs(Float(v1.z) - Float(v2.z)) < epsilon
@@ -317,7 +365,7 @@ struct ContentView: View {
 
 extension SCNGeometry {
     static func triangleGeometry(_ v1: SCNVector3, _ v2: SCNVector3, _ v3: SCNVector3, radius: Float, color: PlatformColor) -> SCNGeometry {
-        let vertices = [v1, v2, v3].map { normalize($0, radius: radius) }
+        let vertices = [v1, v2, v3]
         
         let source = SCNGeometrySource(vertices: vertices)
         let indices: [UInt32] = [0, 1, 2]
@@ -330,15 +378,6 @@ extension SCNGeometry {
         
         return geometry
     }
-    
-    private static func normalize(_ vector: SCNVector3, radius: Float) -> SCNVector3 {
-        let length = Float(sqrt(Double(vector.x * vector.x + vector.y * vector.y + vector.z * vector.z)))
-        return SCNVector3(
-            Float(vector.x) / length * radius,
-            Float(vector.y) / length * radius,
-            Float(vector.z) / length * radius
-        )
-    }
 }
 
 struct ChakraColor: Identifiable, Hashable {
@@ -348,6 +387,8 @@ struct ChakraColor: Identifiable, Hashable {
     
     func hash(into hasher: inout Hasher) {
         hasher.combine(id)
+        hasher.combine(name)
+        hasher.combine(color)
     }
     
     static func == (lhs: ChakraColor, rhs: ChakraColor) -> Bool {
