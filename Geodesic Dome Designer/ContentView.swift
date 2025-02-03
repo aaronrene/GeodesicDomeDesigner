@@ -17,10 +17,12 @@ typealias PlatformColor = NSColor
 #endif
 
 struct ContentView: View {
-    @State private var diameter: Double = 20.0
+    @State private var diameter: Double = 12.0  // Starting with 12 inches
     @State private var frequency: Int = 2
     @State private var selectedColors: Set<ChakraColor> = []
     @State private var showDome: Bool = false
+    @State private var showFloorGuide: Bool = true
+    @State private var selectedBackground: BackgroundStyle = .gray
     
     let chakraColors: [ChakraColor] = [
         ChakraColor(name: "Crown (Violet)", color: .purple),
@@ -29,7 +31,86 @@ struct ContentView: View {
         ChakraColor(name: "Heart (Green)", color: .green),
         ChakraColor(name: "Solar Plexus (Yellow)", color: .yellow),
         ChakraColor(name: "Sacral (Orange)", color: .orange),
-        ChakraColor(name: "Root (Red)", color: .red)
+        ChakraColor(name: "Root (Red)", color: .red),
+        // Additional colors
+        ChakraColor(name: "Sky Blue", color: .init(red: 0.4, green: 0.7, blue: 1.0)),
+        ChakraColor(name: "Rose Pink", color: .pink),
+        ChakraColor(name: "Emerald", color: .init(red: 0.0, green: 0.8, blue: 0.6)),
+        ChakraColor(name: "Gold", color: .init(red: 1.0, green: 0.84, blue: 0.0)),
+        ChakraColor(name: "Silver", color: .init(red: 0.75, green: 0.75, blue: 0.75)),
+        ChakraColor(name: "Turquoise", color: .init(red: 0.25, green: 0.88, blue: 0.82)),
+        ChakraColor(name: "Lavender", color: .init(red: 0.9, green: 0.8, blue: 1.0))
+    ]
+    
+    enum BackgroundStyle: String, CaseIterable {
+        case gray = "Gray"
+        case white = "White"
+        case black = "Black"
+        case grid = "Grid"
+        case forest = "Forest"
+        case countryside = "Countryside"
+        case city = "City"
+        case space = "Outer Space"
+        case beach = "Beach"
+        case mountains = "Mountains"
+        case sunset = "Sunset"
+        case desert = "Desert"
+        case underwater = "Underwater"
+        case jungle = "Jungle"
+        case arctic = "Arctic"
+        case volcano = "Volcano"
+    }
+    
+    struct Environment {
+        let name: String
+        let type: EnvironmentType
+        let panorama: String?
+        let fogColor: NSColor
+        let ambientLight: Float
+        
+        enum EnvironmentType {
+            case skybox
+            case panorama
+            case generated
+        }
+    }
+
+    let environments: [Environment] = [
+        Environment(
+            name: "Forest",
+            type: .panorama,
+            panorama: "forest_panorama",
+            fogColor: .green.withAlphaComponent(0.1),
+            ambientLight: 0.8
+        ),
+        Environment(
+            name: "Mountains",
+            type: .skybox,
+            panorama: "mountains_skybox",
+            fogColor: .white.withAlphaComponent(0.2),
+            ambientLight: 1.0
+        ),
+        Environment(
+            name: "Beach",
+            type: .panorama,
+            panorama: "beach_panorama",
+            fogColor: .blue.withAlphaComponent(0.1),
+            ambientLight: 1.0
+        ),
+        Environment(
+            name: "Space",
+            type: .generated,
+            panorama: nil,
+            fogColor: .clear,
+            ambientLight: 0.3
+        ),
+        Environment(
+            name: "City",
+            type: .panorama,
+            panorama: "city_panorama",
+            fogColor: .gray.withAlphaComponent(0.2),
+            ambientLight: 0.9
+        )
     ]
     
     var body: some View {
@@ -41,7 +122,7 @@ struct ContentView: View {
                             scene: createScene(),
                             options: [.allowsCameraControl, .autoenablesDefaultLighting]
                         )
-                        .frame(height: 300)
+                        .frame(height: 400)  // Increased height
                         .background(Color.gray.opacity(0.1))
                     }
                 }
@@ -49,8 +130,8 @@ struct ContentView: View {
                 Form {
                     Section(header: Text("Dome Parameters")) {
                         VStack(alignment: .leading) {
-                            Text("Diameter: \(Int(diameter)) feet")
-                            Slider(value: $diameter, in: 10...100, step: 1)
+                            Text("Diameter: \(Int(diameter)) inches")
+                            Slider(value: $diameter, in: 6...24, step: 1)
                         }
                         
                         Picker("Frequency", selection: $frequency) {
@@ -61,18 +142,34 @@ struct ContentView: View {
                     }
                     
                     Section(header: Text("Chakra Colors")) {
-                        ForEach(chakraColors) { chakraColor in
-                            Toggle(chakraColor.name, isOn: Binding(
-                                get: { selectedColors.contains(chakraColor) },
-                                set: { isSelected in
-                                    if isSelected {
-                                        selectedColors.insert(chakraColor)
-                                    } else {
-                                        selectedColors.remove(chakraColor)
-                                    }
-                                }
-                            ))
-                            .tint(chakraColor.color)
+                        LazyVGrid(columns: [
+                            GridItem(.adaptive(minimum: 150, maximum: 200), alignment: .leading)
+                        ], alignment: .leading, spacing: 8) {
+                            ForEach(chakraColors) { chakraColor in
+                                Toggle(chakraColor.name, isOn: 
+                                    Binding(
+                                        get: { selectedColors.contains(chakraColor) },
+                                        set: { isSelected in
+                                            if isSelected {
+                                                selectedColors.insert(chakraColor)
+                                            } else {
+                                                selectedColors.remove(chakraColor)
+                                            }
+                                        }
+                                    )
+                                )
+                                .tint(chakraColor.color)
+                            }
+                        }
+                    }
+                    
+                    Section(header: Text("View Options")) {
+                        Toggle("Show Floor Guide", isOn: $showFloorGuide)
+                        
+                        Picker("Background", selection: $selectedBackground) {
+                            ForEach(BackgroundStyle.allCases, id: \.self) { style in
+                                Text(style.rawValue).tag(style)
+                            }
                         }
                     }
                     
@@ -117,21 +214,211 @@ struct ContentView: View {
         let domeNode = createGeodesicDome()
         scene.rootNode.addChildNode(domeNode)
         
-        // Add lighting
+        // Add floor guide if enabled
+        if showFloorGuide {
+            let floor = SCNFloor()
+            floor.reflectivity = 0
+            floor.firstMaterial?.diffuse.contents = NSColor.gray.withAlphaComponent(0.3)
+            floor.firstMaterial?.isDoubleSided = true
+            let floorNode = SCNNode(geometry: floor)
+            floorNode.position.y = 0
+            scene.rootNode.addChildNode(floorNode)
+        }
+        
+        // Configure background and environment
+        switch selectedBackground {
+        case .gray, .white, .black:
+            scene.background.contents = NSColor(named: selectedBackground.rawValue.lowercased())
+        case .grid:
+            scene.background.contents = createGridTexture()
+        case .space:
+            setupSpaceEnvironment(scene)
+        case .forest:
+            setupForestEnvironment(scene)
+        case .mountains:
+            setupMountainEnvironment(scene)
+        case .beach:
+            setupBeachEnvironment(scene)
+        case .city:
+            setupCityEnvironment(scene)
+        default:
+            scene.background.contents = createColoredBackground(.gray.withAlphaComponent(0.3))
+        }
+        
+        return scene
+    }
+    
+    private func setupSpaceEnvironment(_ scene: SCNScene) {
+        scene.background.contents = NSColor.black
+        
+        // Add stars
+        for _ in 0..<1000 {
+            let star = SCNNode(geometry: SCNSphere(radius: 0.1))
+            star.geometry?.firstMaterial?.diffuse.contents = NSColor.white
+            star.geometry?.firstMaterial?.emission.contents = NSColor.white
+            
+            let distance: CGFloat = 400
+            let theta = CGFloat.random(in: 0...CGFloat.pi * 2)
+            let phi = CGFloat.random(in: 0...CGFloat.pi)
+            
+            star.position = SCNVector3(
+                x: distance * sin(phi) * cos(theta),
+                y: distance * sin(phi) * sin(theta),
+                z: distance * cos(phi)
+            )
+            
+            scene.rootNode.addChildNode(star)
+        }
+        
+        // Add a few nebulae
+        addNebula(to: scene, color: .purple.withAlphaComponent(0.3), position: SCNVector3(100, 50, -200))
+        addNebula(to: scene, color: .blue.withAlphaComponent(0.2), position: SCNVector3(-150, -30, -180))
+    }
+    
+    private func addNebula(to scene: SCNScene, color: NSColor, position: SCNVector3) {
+        let nebula = SCNNode(geometry: SCNSphere(radius: 30))
+        nebula.geometry?.firstMaterial?.diffuse.contents = color
+        nebula.geometry?.firstMaterial?.emission.contents = color
+        nebula.opacity = 0.3
+        nebula.position = position
+        scene.rootNode.addChildNode(nebula)
+    }
+    
+    private func setupForestEnvironment(_ scene: SCNScene) {
+        // Use panorama for background
+        if let panorama = NSImage(named: "forest_panorama") {
+            scene.background.contents = panorama
+        }
+        
+        // Scale dome to match environment scale
+        if let domeNode = scene.rootNode.childNodes.first {
+            domeNode.scale = SCNVector3(10, 10, 10)
+            domeNode.position = SCNVector3(0, 0, 0)
+        }
+        
+        // Add directional light
         let light = SCNNode()
         light.light = SCNLight()
-        light.light?.type = .omni
-        light.position = SCNVector3(x: 0, y: 10, z: 10)
+        light.light?.type = .directional
+        light.light?.intensity = 800
+        light.position = SCNVector3(50, 50, 50)
         scene.rootNode.addChildNode(light)
         
         // Add ambient light
-        let ambientLight = SCNNode()
-        ambientLight.light = SCNLight()
-        ambientLight.light?.type = .ambient
-        ambientLight.light?.intensity = 100
-        scene.rootNode.addChildNode(ambientLight)
+        let ambient = SCNNode()
+        ambient.light = SCNLight()
+        ambient.light?.type = .ambient
+        ambient.light?.intensity = 300
+        scene.rootNode.addChildNode(ambient)
         
-        return scene
+        // Add subtle fog
+        addAtmosphericFog(to: scene, color: .green.withAlphaComponent(0.1))
+    }
+    
+    private func createSkyboxFaces(from panorama: NSImage) -> [NSImage] {
+        let faceSize = 1024  // Size of each cube face
+        
+        // Create 6 empty images for each face
+        let faces = (0..<6).map { _ in NSImage(size: NSSize(width: faceSize, height: faceSize)) }
+        
+        // Get panorama dimensions
+        let panoramaSize = panorama.size
+        let width = Int(panoramaSize.width)
+        let height = Int(panoramaSize.height)
+        
+        // Convert panorama to bitmap
+        guard let panoramaBitmap = panorama.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
+            return faces
+        }
+        
+        // Create context for each face
+        for (index, face) in faces.enumerated() {
+            face.lockFocus()
+            let context = NSGraphicsContext.current?.cgContext
+            
+            // Calculate UV coordinates based on face index
+            // 0: right, 1: left, 2: top, 3: bottom, 4: front, 5: back
+            for y in 0..<faceSize {
+                for x in 0..<faceSize {
+                    let (u, v) = cubeToSpherical(
+                        x: Double(x) / Double(faceSize),
+                        y: Double(y) / Double(faceSize),
+                        face: index
+                    )
+                    
+                    // Map spherical coordinates to panorama pixels
+                    let px = Int(u * Double(width)) % width
+                    let py = Int(v * Double(height)) % height
+                    
+                    // Sample color from panorama
+                    if let pixelData = panoramaBitmap.dataProvider?.data,
+                       let data = CFDataGetBytePtr(pixelData) {
+                        let offset = (py * width + px) * 4
+                        let color = NSColor(
+                            red: CGFloat(data[offset]) / 255.0,
+                            green: CGFloat(data[offset + 1]) / 255.0,
+                            blue: CGFloat(data[offset + 2]) / 255.0,
+                            alpha: CGFloat(data[offset + 3]) / 255.0
+                        )
+                        context?.setFillColor(color.cgColor)
+                        context?.fill(CGRect(x: x, y: y, width: 1, height: 1))
+                    }
+                }
+            }
+            face.unlockFocus()
+        }
+        
+        return faces
+    }
+    
+    private func cubeToSpherical(x: Double, y: Double, face: Int) -> (u: Double, v: Double) {
+        // Convert cube face coordinates to spherical coordinates
+        let x = x * 2 - 1
+        let y = y * 2 - 1
+        var u: Double = 0
+        var v: Double = 0
+        
+        switch face {
+        case 0: // Right
+            u = atan2(1, -x) / (2 * .pi) + 0.5
+            v = asin(-y) / .pi + 0.5
+        case 1: // Left
+            u = atan2(-1, x) / (2 * .pi) + 0.5
+            v = asin(-y) / .pi + 0.5
+        case 2: // Top
+            u = atan2(y, x) / (2 * .pi) + 0.5
+            v = asin(1) / .pi + 0.5
+        case 3: // Bottom
+            u = atan2(-y, x) / (2 * .pi) + 0.5
+            v = asin(-1) / .pi + 0.5
+        case 4: // Front
+            u = atan2(x, 1) / (2 * .pi) + 0.5
+            v = asin(-y) / .pi + 0.5
+        case 5: // Back
+            u = atan2(x, -1) / (2 * .pi) + 0.5
+            v = asin(-y) / .pi + 0.5
+        default:
+            break
+        }
+        
+        return (u, v)
+    }
+    
+    private func getFogColorForBackground(_ style: BackgroundStyle) -> NSColor {
+        switch style {
+        case .forest: return .green.withAlphaComponent(0.1)
+        case .countryside: return .yellow.withAlphaComponent(0.1)
+        case .city: return .gray.withAlphaComponent(0.2)
+        case .beach: return .blue.withAlphaComponent(0.1)
+        case .mountains: return .white.withAlphaComponent(0.1)
+        case .sunset: return .orange.withAlphaComponent(0.2)
+        case .desert: return .yellow.withAlphaComponent(0.15)
+        case .underwater: return .blue.withAlphaComponent(0.3)
+        case .jungle: return .green.withAlphaComponent(0.2)
+        case .arctic: return .white.withAlphaComponent(0.2)
+        case .volcano: return .red.withAlphaComponent(0.15)
+        default: return .clear
+        }
     }
     
     private func createGeodesicDome() -> SCNNode {
@@ -141,73 +428,33 @@ struct ContentView: View {
         var colorIndex = 0
         
         // Create icosahedron vertices with special handling for v2 and v6
-        let baseVertices = if frequency == 2 || frequency == 6 {
-            [
-                // Top vertex
-                SCNVector3(0, radius, 0),
-                // Upper pentagon vertices
-                SCNVector3(radius * cos(0), radius * 0.5, radius * sin(0)),
-                SCNVector3(radius * cos(2 * .pi / 5), radius * 0.5, radius * sin(2 * .pi / 5)),
-                SCNVector3(radius * cos(4 * .pi / 5), radius * 0.5, radius * sin(4 * .pi / 5)),
-                SCNVector3(radius * cos(6 * .pi / 5), radius * 0.5, radius * sin(6 * .pi / 5)),
-                SCNVector3(radius * cos(8 * .pi / 5), radius * 0.5, radius * sin(8 * .pi / 5)),
-                // Lower pentagon vertices (adjusted height)
-                SCNVector3(radius * cos(.pi / 5), -radius * 0.15, radius * sin(.pi / 5)),
-                SCNVector3(radius * cos(3 * .pi / 5), -radius * 0.15, radius * sin(3 * .pi / 5)),
-                SCNVector3(radius * cos(5 * .pi / 5), -radius * 0.15, radius * sin(5 * .pi / 5)),
-                SCNVector3(radius * cos(7 * .pi / 5), -radius * 0.15, radius * sin(7 * .pi / 5)),
-                SCNVector3(radius * cos(9 * .pi / 5), -radius * 0.15, radius * sin(9 * .pi / 5)),
-                // Bottom center vertex (adjusted height)
-                SCNVector3(0, -radius * 0.2, 0)
-            ]
-        } else {
-            [
-                // Top vertex
-                SCNVector3(0, radius, 0),
-                // Upper pentagon vertices
-                SCNVector3(radius * cos(0), radius * 0.5, radius * sin(0)),
-                SCNVector3(radius * cos(2 * .pi / 5), radius * 0.5, radius * sin(2 * .pi / 5)),
-                SCNVector3(radius * cos(4 * .pi / 5), radius * 0.5, radius * sin(4 * .pi / 5)),
-                SCNVector3(radius * cos(6 * .pi / 5), radius * 0.5, radius * sin(6 * .pi / 5)),
-                SCNVector3(radius * cos(8 * .pi / 5), radius * 0.5, radius * sin(8 * .pi / 5)),
-                // Lower pentagon vertices
-                SCNVector3(radius * cos(.pi / 5), -radius * 0.2, radius * sin(.pi / 5)),
-                SCNVector3(radius * cos(3 * .pi / 5), -radius * 0.2, radius * sin(3 * .pi / 5)),
-                SCNVector3(radius * cos(5 * .pi / 5), -radius * 0.2, radius * sin(5 * .pi / 5)),
-                SCNVector3(radius * cos(7 * .pi / 5), -radius * 0.2, radius * sin(7 * .pi / 5)),
-                SCNVector3(radius * cos(9 * .pi / 5), -radius * 0.2, radius * sin(9 * .pi / 5)),
-                // Bottom vertex
-                SCNVector3(0, -radius * 0.25, 0)
-            ]
-        }
+        let baseVertices = [
+            // Top vertex
+            SCNVector3(0, radius, 0),
+            // Upper pentagon vertices
+            SCNVector3(radius * cos(0), radius * 0.5, radius * sin(0)),
+            SCNVector3(radius * cos(2 * .pi / 5), radius * 0.5, radius * sin(2 * .pi / 5)),
+            SCNVector3(radius * cos(4 * .pi / 5), radius * 0.5, radius * sin(4 * .pi / 5)),
+            SCNVector3(radius * cos(6 * .pi / 5), radius * 0.5, radius * sin(6 * .pi / 5)),
+            SCNVector3(radius * cos(8 * .pi / 5), radius * 0.5, radius * sin(8 * .pi / 5)),
+            // Lower pentagon vertices (at equator)
+            SCNVector3(radius * cos(.pi / 5), 0, radius * sin(.pi / 5)),
+            SCNVector3(radius * cos(3 * .pi / 5), 0, radius * sin(3 * .pi / 5)),
+            SCNVector3(radius * cos(5 * .pi / 5), 0, radius * sin(5 * .pi / 5)),
+            SCNVector3(radius * cos(7 * .pi / 5), 0, radius * sin(7 * .pi / 5)),
+            SCNVector3(radius * cos(9 * .pi / 5), 0, radius * sin(9 * .pi / 5))
+        ]
         
         // Define faces for a complete dome
-        let faces = if frequency == 2 || frequency == 6 {
-            [
-                // Top pentagon
-                [0,1,2], [0,2,3], [0,3,4], [0,4,5], [0,5,1],
-                // Middle strip
-                [1,6,2], [2,7,3], [3,8,4], [4,9,5], [5,10,1],
-                // Bottom pentagon and connections
-                [6,7,2], [7,8,3], [8,9,4], [9,10,5], [10,6,1],
-                // Additional connections
-                [6,2,7], [7,3,8], [8,4,9], [9,5,10], [10,1,6],
-                // Base triangles
-                [6,7,11], [7,8,11], [8,9,11], [9,10,11], [10,6,11],
-                // Extra connections for completeness
-                [2,6,7], [3,7,8], [4,8,9], [5,9,10], [1,10,6]
-            ]
-        } else {
-            // Standard faces for other frequencies (similar pattern)
-            [
-                [0,1,2], [0,2,3], [0,3,4], [0,4,5], [0,5,1],
-                [1,6,2], [2,7,3], [3,8,4], [4,9,5], [5,10,1],
-                [6,7,2], [7,8,3], [8,9,4], [9,10,5], [10,6,1],
-                [6,2,7], [7,3,8], [8,4,9], [9,5,10], [10,1,6],
-                [6,7,11], [7,8,11], [8,9,11], [9,10,11], [10,6,11],
-                [2,6,7], [3,7,8], [4,8,9], [5,9,10], [1,10,6]
-            ]
-        }
+        let faces = [
+            // Top pentagon
+            [0,1,2], [0,2,3], [0,3,4], [0,4,5], [0,5,1],
+            // Middle strip
+            [1,6,2], [2,7,3], [3,8,4], [4,9,5], [5,10,1],
+            // Upper connections
+            [6,7,2], [7,8,3], [8,9,4], [9,10,5], [10,6,1],
+            [2,6,7], [3,7,8], [4,8,9], [5,9,10], [1,10,6]
+        ]
         
         var processedVertices: [VertexKey: SCNVector3] = [:]
         
@@ -216,13 +463,13 @@ struct ContentView: View {
             let v2 = baseVertices[face[1]]
             let v3 = baseVertices[face[2]]
             
-            let centerY = (v1.y + v2.y + v3.y) / 3.0
-            if centerY >= -0.2 { // Adjusted threshold
+            let centerY = Float((v1.y + v2.y + v3.y) / 3.0)
+            if centerY >= Float(-radius * 0.2) {
                 let subdivided = subdivideTriangle(v1, v2, v3, frequency: frequency, processedVertices: &processedVertices)
                 
                 for triangle in subdivided {
-                    let triangleCenterY = (triangle.0.y + triangle.1.y + triangle.2.y) / 3.0
-                    if triangleCenterY >= -0.2 { // Matched threshold
+                    let triangleCenterY = Float((triangle.0.y + triangle.1.y + triangle.2.y) / 3.0)
+                    if triangleCenterY >= Float(-radius * 0.2) {
                         let currentColor = selectedColorsArray[colorIndex % selectedColorsArray.count]
                         let geometry = createTriangleGeometry(
                             triangle.0,
@@ -244,9 +491,15 @@ struct ContentView: View {
     private func subdivideTriangle(_ v1: SCNVector3, _ v2: SCNVector3, _ v3: SCNVector3, frequency: Int, processedVertices: inout [VertexKey: SCNVector3]) -> [(SCNVector3, SCNVector3, SCNVector3)] {
         var triangles: [(SCNVector3, SCNVector3, SCNVector3)] = []
         let radius = Float(diameter) / 2.0
+        let bottomY = Float(-radius * 0.2)
         
         // Helper function to get or create a normalized vertex
         func getVertex(_ point: SCNVector3) -> SCNVector3 {
+            // Check if this point is on the base perimeter
+            if abs(Float(point.y) - bottomY) < 0.001 {
+                return point // Don't normalize base perimeter points
+            }
+            
             let normalized = normalize(point, radius: radius)
             let key = VertexKey(normalized)
             if let existing = processedVertices[key] {
@@ -275,30 +528,12 @@ struct ContentView: View {
             }
         }
         
-        // Create triangles with special handling for bottom rows
+        // Create triangles
         for i in 0..<frequency {
             let currentRow = vertices[i]
             let nextRow = vertices[i + 1]
-            let isBottomSection = i >= frequency - 2 // Check if we're in bottom two rows
             
             for j in 0..<(currentRow.count - 1) {
-                let avgY = Float((currentRow[j].y + currentRow[j + 1].y + nextRow[j].y) / 3.0)
-                
-                // Special handling for v2 and v6 bottom sections
-                if isBottomSection && (frequency == 2 || frequency == 6) && avgY < Float(-0.2) {
-                    let avgX = Float((currentRow[j].x + currentRow[j + 1].x + nextRow[j].x) / 3.0)
-                    let avgZ = Float((currentRow[j].z + currentRow[j + 1].z + nextRow[j].z) / 3.0)
-                    let distanceFromCenter = Float(sqrt(avgX * avgX + avgZ * avgZ))
-                    
-                    // Skip triangles based on position and pattern
-                    if frequency == 2 && (j % 2 == 1) {
-                        continue
-                    }
-                    if frequency == 6 && distanceFromCenter < radius * 0.8 {
-                        continue
-                    }
-                }
-                
                 triangles.append((
                     currentRow[j],
                     currentRow[j + 1],
@@ -340,7 +575,9 @@ struct ContentView: View {
     }
     
     private func normalize(_ vector: SCNVector3, radius: Float) -> SCNVector3 {
-        let length = Float(sqrt(Double(vector.x * vector.x + vector.y * vector.y + vector.z * vector.z)))
+        let length = sqrt(Float(vector.x * vector.x + vector.y * vector.y + vector.z * vector.z))
+        
+        // Project all points onto sphere surface
         return SCNVector3(
             Float(vector.x) / length * radius,
             Float(vector.y) / length * radius,
@@ -360,6 +597,231 @@ struct ContentView: View {
         let y = Float(v1.y) + (Float(v2.y) - Float(v1.y)) * t
         let z = Float(v1.z) + (Float(v2.z) - Float(v1.z)) * t
         return SCNVector3(x, y, z)
+    }
+    
+    private func createGridTexture() -> NSImage {
+        let size = NSSize(width: 512, height: 512)
+        let image = NSImage(size: size)
+        
+        image.lockFocus()
+        NSColor.black.setFill()
+        NSRect(origin: .zero, size: size).fill()
+        
+        NSColor.gray.setStroke()
+        let path = NSBezierPath()
+        let gridSize: CGFloat = 32
+        
+        for i in 0...Int(size.width/gridSize) {
+            let x = CGFloat(i) * gridSize
+            path.move(to: NSPoint(x: x, y: 0))
+            path.line(to: NSPoint(x: x, y: size.height))
+        }
+        
+        for i in 0...Int(size.height/gridSize) {
+            let y = CGFloat(i) * gridSize
+            path.move(to: NSPoint(x: 0, y: y))
+            path.line(to: NSPoint(x: size.width, y: y))
+        }
+        
+        path.stroke()
+        image.unlockFocus()
+        
+        return image
+    }
+    
+    private func createHorizonLine() -> SCNNode {
+        let radius = Float(diameter) * 2 // Make horizon line wider than dome
+        let segments = 64
+        let path = NSBezierPath()
+        
+        for i in 0...segments {
+            let angle = (2.0 * .pi * Float(i)) / Float(segments)
+            let x = radius * cos(angle)
+            let z = radius * sin(angle)
+            let point = NSPoint(x: CGFloat(x), y: CGFloat(z))
+            
+            if i == 0 {
+                path.move(to: point)
+            } else {
+                path.line(to: point)
+            }
+        }
+        
+        let shape = SCNShape(path: path, extrusionDepth: 0)
+        let material = SCNMaterial()
+        material.diffuse.contents = NSColor.gray.withAlphaComponent(0.3)
+        shape.materials = [material]
+        
+        let node = SCNNode(geometry: shape)
+        node.eulerAngles.x = .pi / 2 // Rotate to horizontal
+        return node
+    }
+    
+    private func addAtmosphericFog(to scene: SCNScene, color: NSColor) {
+        scene.fogStartDistance = 0
+        scene.fogEndDistance = 100
+        scene.fogDensityExponent = 2
+        scene.fogColor = color
+    }
+    
+    private func addStarfield(to scene: SCNScene) {
+        let starsNode = SCNNode()
+        let starsCount = 1000
+        
+        for _ in 0..<starsCount {
+            let starGeometry = SCNSphere(radius: 0.05)
+            let starMaterial = SCNMaterial()
+            starMaterial.diffuse.contents = NSColor.white
+            starGeometry.materials = [starMaterial]
+            
+            let starNode = SCNNode(geometry: starGeometry)
+            let distance = Float(50 + arc4random_uniform(100))
+            let theta = Float(arc4random_uniform(360)) * .pi / 180
+            let phi = Float(arc4random_uniform(360)) * .pi / 180
+            
+            starNode.position = SCNVector3(
+                distance * sin(theta) * cos(phi),
+                distance * sin(theta) * sin(phi),
+                distance * cos(theta)
+            )
+            
+            starsNode.addChildNode(starNode)
+        }
+        
+        scene.rootNode.addChildNode(starsNode)
+    }
+    
+    private func createColoredBackground(_ color: NSColor) -> NSImage {
+        let size = NSSize(width: 512, height: 512)
+        let image = NSImage(size: size)
+        
+        image.lockFocus()
+        color.setFill()
+        NSRect(origin: .zero, size: size).fill()
+        image.unlockFocus()
+        
+        return image
+    }
+    
+    private func setupMountainEnvironment(_ scene: SCNScene) {
+        scene.background.contents = NSImage(named: "mountains_panorama")
+        addAtmosphericFog(to: scene, color: .white.withAlphaComponent(0.2))
+        
+        // Add distant mountain geometry
+        let mountains = SCNNode()
+        let mountainGeometry = SCNPyramid(width: 10, height: 15, length: 10)
+        mountainGeometry.firstMaterial?.diffuse.contents = NSColor.gray
+        
+        for i in 0..<8 {
+            let mountain = SCNNode(geometry: mountainGeometry)
+            let angle = CGFloat(i) * .pi / 4
+            mountain.position = SCNVector3(
+                x: CGFloat(80) * cos(angle),
+                y: -5,
+                z: CGFloat(80) * sin(angle)
+            )
+            mountains.addChildNode(mountain)
+        }
+        
+        scene.rootNode.addChildNode(mountains)
+    }
+
+    private func setupBeachEnvironment(_ scene: SCNScene) {
+        scene.background.contents = NSImage(named: "beach_panorama")
+        
+        // Add ocean plane
+        let ocean = SCNPlane(width: 1000, height: 1000)
+        ocean.firstMaterial?.diffuse.contents = NSColor.blue.withAlphaComponent(0.6)
+        ocean.firstMaterial?.isDoubleSided = true
+        
+        let oceanNode = SCNNode(geometry: ocean)
+        oceanNode.eulerAngles.x = -.pi / 2
+        oceanNode.position.y = -1
+        
+        scene.rootNode.addChildNode(oceanNode)
+        addAtmosphericFog(to: scene, color: .blue.withAlphaComponent(0.1))
+    }
+
+    private func setupCityEnvironment(_ scene: SCNScene) {
+        scene.background.contents = NSImage(named: "city_panorama")
+        addAtmosphericFog(to: scene, color: .gray.withAlphaComponent(0.2))
+        
+        // Add distant buildings
+        addDistantBuildings(to: scene)
+    }
+
+    private func addDistantBuildings(to scene: SCNScene) {
+        let buildingCount = 30
+        let radius: CGFloat = 100
+        
+        for _ in 0..<buildingCount {
+            let angle = CGFloat.random(in: 0...(2 * .pi))
+            let distance = CGFloat.random(in: 50...radius)
+            let height = CGFloat.random(in: 10...30)
+            
+            let building = SCNBox(width: 5, height: height, length: 5, chamferRadius: 0)
+            building.firstMaterial?.diffuse.contents = NSColor.darkGray
+            
+            let buildingNode = SCNNode(geometry: building)
+            buildingNode.position = SCNVector3(
+                x: distance * cos(angle),
+                y: height/2,
+                z: distance * sin(angle)
+            )
+            
+            scene.rootNode.addChildNode(buildingNode)
+        }
+    }
+
+    private func setupEnvironment(_ scene: SCNScene, _ environment: Environment) {
+        switch environment.type {
+        case .panorama:
+            // Single 360° panorama image
+            if let panoramaImage = NSImage(named: environment.panorama ?? "") {
+                scene.background.contents = panoramaImage
+            }
+            
+        case .skybox:
+            // Six-sided cube map
+            scene.background.contents = [
+                NSImage(named: "right"),
+                NSImage(named: "left"),
+                NSImage(named: "top"),
+                NSImage(named: "bottom"),
+                NSImage(named: "front"),
+                NSImage(named: "back")
+            ]
+            
+        case .generated:
+            // Programmatically generated environment
+            if environment.name == "Space" {
+                setupSpaceEnvironment(scene)
+            }
+        }
+        
+        addAtmosphericFog(to: scene, color: environment.fogColor)
+    }
+
+    // Create a basic panorama programmatically
+    private func createBasicPanorama(_ name: String, baseColor: NSColor) -> NSImage {
+        let width = 4096
+        let height = 2048
+        let image = NSImage(size: NSSize(width: width, height: height))
+        
+        image.lockFocus()
+        
+        // Create gradient background
+        let gradient = NSGradient(colors: [
+            baseColor,
+            baseColor.withAlphaComponent(0.7),
+            .white.withAlphaComponent(0.3)
+        ])
+        
+        gradient?.draw(in: NSRect(x: 0, y: 0, width: width, height: height),
+                      angle: -90)
+        
+        image.unlockFocus()
+        return image
     }
 }
 
