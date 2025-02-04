@@ -23,6 +23,13 @@ struct ContentView: View {
     @State private var showDome: Bool = false
     @State private var showFloorGuide: Bool = true
     @State private var selectedBackground: BackgroundStyle = .gray
+    @State private var showIconGenerator = false
+    @State private var showIconSourcePicker = false
+    @State private var alertMessage: String?
+    @State private var showAlert = false
+    @State private var showIconAlert = false
+    @State private var iconAlertMessage: String?
+    @State private var selectedEnvironment: Environment?  // Changed to optional
     
     let chakraColors: [ChakraColor] = [
         ChakraColor(name: "Crown (Violet)", color: .purple),
@@ -61,189 +68,178 @@ struct ContentView: View {
         case volcano = "Volcano"
     }
     
-    struct Environment {
+    struct Environment: Identifiable, Hashable {
+        let id = UUID()
         let name: String
         let type: EnvironmentType
         let panorama: String?
-        let fogColor: NSColor
-        let ambientLight: Float
-        
-        enum EnvironmentType {
-            case skybox
-            case panorama
-            case generated
-        }
+        let fogColor: Color?
     }
 
-    let environments: [Environment] = [
-        Environment(
-            name: "Forest",
-            type: .panorama,
-            panorama: "forest_panorama",
-            fogColor: .green.withAlphaComponent(0.1),
-            ambientLight: 0.8
-        ),
-        Environment(
-            name: "Mountains",
-            type: .skybox,
-            panorama: "mountains_skybox",
-            fogColor: .white.withAlphaComponent(0.2),
-            ambientLight: 1.0
-        ),
-        Environment(
-            name: "Beach",
-            type: .panorama,
-            panorama: "beach_panorama",
-            fogColor: .blue.withAlphaComponent(0.1),
-            ambientLight: 1.0
-        ),
-        Environment(
-            name: "Space",
-            type: .generated,
-            panorama: nil,
-            fogColor: .clear,
-            ambientLight: 0.3
-        ),
-        Environment(
-            name: "City",
-            type: .panorama,
-            panorama: "city_panorama",
-            fogColor: .gray.withAlphaComponent(0.2),
-            ambientLight: 0.9
-        )
+    enum EnvironmentType {
+        case hdr
+        case panorama
+        case generated
+        case skybox
+        case basic
+    }
+
+    static let environments: [Environment] = [
+        // Basic backgrounds
+        Environment(name: "Gray", type: .basic, panorama: nil, fogColor: .gray.opacity(0.3)),
+        Environment(name: "White", type: .basic, panorama: nil, fogColor: .white.opacity(0.1)),
+        Environment(name: "Black", type: .basic, panorama: nil, fogColor: .black.opacity(0.2)),
+        
+        // HDR Environments
+        Environment(name: "HDR Forest Cave", type: .hdr, panorama: "forest_cave_4k", fogColor: nil),
+        Environment(name: "Autumn Forest", type: .hdr, panorama: "autumn_forest_01_4k", fogColor: nil),
+        
+        // Panorama Environments
+        Environment(name: "Forest", type: .panorama, panorama: "forest", fogColor: .green.opacity(0.3)),
+        Environment(name: "Beach", type: .panorama, panorama: "beach", fogColor: .blue.opacity(0.2)),
+        Environment(name: "City", type: .panorama, panorama: "city", fogColor: .gray.opacity(0.4)),
+        Environment(name: "Space", type: .generated, panorama: nil, fogColor: .black.opacity(0.5))
     ]
     
     var body: some View {
         NavigationView {
             VStack {
-                if showDome {
-                    GeometryReader { geometry in
-                        SceneView(
-                            scene: createScene(),
-                            options: [.allowsCameraControl, .autoenablesDefaultLighting]
-                        )
-                        .frame(height: 400)  // Increased height
-                        .background(Color.gray.opacity(0.1))
+                Form {
+                    Section(header: Text("Dome Properties")) {
+                        Slider(value: $diameter, in: 6...24, step: 1) {
+                            Text("Diameter: \(Int(diameter)) feet")
+                        }
+                        Stepper("Frequency: \(frequency)", value: $frequency, in: 2...6)
+                    }
+                    
+                    Section(header: Text("Environment")) {
+                        Picker("Environment", selection: $selectedEnvironment) {
+                            ForEach(Self.environments) { environment in
+                                Text(environment.name).tag(Optional(environment))
+                            }
+                        }
+                    }
+                    
+                    Section(header: Text("Colors")) {
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack {
+                                ForEach(chakraColors) { chakraColor in
+                                    ColorToggleButton(
+                                        color: chakraColor,
+                                        isSelected: selectedColors.contains(chakraColor),
+                                        action: { toggleColor(chakraColor) }
+                                    )
+                                }
+                            }
+                            .padding(.horizontal)
+                        }
                     }
                 }
                 
-                Form {
-                    Section(header: Text("Dome Parameters")) {
-                        VStack(alignment: .leading) {
-                            Text("Diameter: \(Int(diameter)) inches")
-                            Slider(value: $diameter, in: 6...24, step: 1)
-                        }
-                        
-                        Picker("Frequency", selection: $frequency) {
-                            ForEach(2...6, id: \.self) { freq in
-                                Text("v\(freq)").tag(freq)
-                            }
-                        }
+                if showDome {
+                    GeometryReader { geometry in
+                        SceneView(
+                            scene: {
+                                let scene = createScene()
+                                setupEnvironment(scene, selectedEnvironment)
+                                return scene
+                            }(),
+                            pointOfView: {
+                                let cameraNode = SCNNode()
+                                let camera = SCNCamera()
+                                camera.fieldOfView = 60
+                                camera.zNear = 0.1
+                                camera.zFar = 1000
+                                cameraNode.camera = camera
+                                
+                                // Position camera to better frame the dome
+                                let distance = Float(diameter) * 3.0
+                                cameraNode.position = SCNVector3(distance, distance/2, distance)
+                                cameraNode.look(at: SCNVector3(0, 0, 0))
+                                
+                                return cameraNode
+                            }(),
+                            options: [
+                                .allowsCameraControl,
+                                .autoenablesDefaultLighting
+                            ]
+                        )
                     }
-                    
-                    Section(header: Text("Chakra Colors")) {
-                        LazyVGrid(columns: [
-                            GridItem(.adaptive(minimum: 150, maximum: 200), alignment: .leading)
-                        ], alignment: .leading, spacing: 8) {
-                            ForEach(chakraColors) { chakraColor in
-                                Toggle(chakraColor.name, isOn: 
-                                    Binding(
-                                        get: { selectedColors.contains(chakraColor) },
-                                        set: { isSelected in
-                                            if isSelected {
-                                                selectedColors.insert(chakraColor)
-                                            } else {
-                                                selectedColors.remove(chakraColor)
-                                            }
-                                        }
-                                    )
-                                )
-                                .tint(chakraColor.color)
-                            }
-                        }
-                    }
-                    
-                    Section(header: Text("View Options")) {
-                        Toggle("Show Floor Guide", isOn: $showFloorGuide)
-                        
-                        Picker("Background", selection: $selectedBackground) {
-                            ForEach(BackgroundStyle.allCases, id: \.self) { style in
-                                Text(style.rawValue).tag(style)
-                            }
-                        }
-                    }
-                    
-                    Section {
-                        HStack {
-                            Button(action: {
-                                showDome = true
-                            }) {
-                                Text("Generate Dome")
-                                    .frame(maxWidth: .infinity)
-                                    .foregroundColor(.white)
-                            }
-                            .disabled(selectedColors.count < 2)
-                            .listRowBackground(selectedColors.count < 2 ? Color.gray : Color.blue)
+                    .frame(minHeight: 300, maxHeight: .infinity)
+                    .background(Color.black.opacity(0.1))
+                }
+                
+                ScrollView {
+                    Form {
+                        Section(header: Text("View Options")) {
+                            Toggle("Show Floor Guide", isOn: $showFloorGuide)
                             
-                            Button(action: {
-                                showDome = false
-                                selectedColors.removeAll()
-                            }) {
-                                Text("Reset")
-                                    .frame(maxWidth: .infinity)
-                                    .foregroundColor(.white)
+                            Picker("Background", selection: $selectedBackground) {
+                                ForEach(BackgroundStyle.allCases, id: \.self) { style in
+                                    Text(style.rawValue).tag(style)
+                                }
                             }
-                            .listRowBackground(Color.red)
+                        }
+                        
+                        Section {
+                            HStack {
+                                Button(action: {
+                                    showDome = true
+                                }) {
+                                    Text("Generate Dome")
+                                        .frame(maxWidth: .infinity)
+                                        .foregroundColor(.white)
+                                }
+                                .disabled(selectedColors.count < 2)
+                                .listRowBackground(selectedColors.count < 2 ? Color.gray : Color.blue)
+                                
+                                Button(action: {
+                                    showDome = false
+                                    selectedColors.removeAll()
+                                }) {
+                                    Text("Reset")
+                                        .frame(maxWidth: .infinity)
+                                        .foregroundColor(.white)
+                                }
+                                .listRowBackground(Color.red)
+                            }
                         }
                     }
+                    .frame(maxWidth: 600)  // Limit form width for better readability
+                    .padding()
                 }
             }
-            .onAppear {
-                // Initialize with two default colors
-                selectedColors.insert(chakraColors[0])
-                selectedColors.insert(chakraColors[1])
-            }
             .navigationTitle("Geodesic Dome Designer")
+            .frame(minWidth: 600, maxWidth: .infinity, minHeight: 600)
+        }
+        .navigationViewStyle(DefaultNavigationViewStyle())  // Remove the sidebar style
+        .onAppear {
+            if selectedEnvironment == nil {
+                selectedEnvironment = Self.environments[0]
+            }
+            // Initialize with two default colors
+            selectedColors.insert(chakraColors[0])
+            selectedColors.insert(chakraColors[1])
         }
     }
     
     private func createScene() -> SCNScene {
         let scene = SCNScene()
         
-        // Create dome node
+        // Create dome node with adjusted position
         let domeNode = createGeodesicDome()
+        domeNode.position = SCNVector3(0, 0, 0)  // Center the dome
         scene.rootNode.addChildNode(domeNode)
         
-        // Add floor guide if enabled
-        if showFloorGuide {
-            let floor = SCNFloor()
-            floor.reflectivity = 0
-            floor.firstMaterial?.diffuse.contents = NSColor.gray.withAlphaComponent(0.3)
-            floor.firstMaterial?.isDoubleSided = true
-            let floorNode = SCNNode(geometry: floor)
-            floorNode.position.y = 0
-            scene.rootNode.addChildNode(floorNode)
-        }
+        // Add camera
+        let cameraNode = SCNNode()
+        cameraNode.camera = SCNCamera()
         
-        // Configure background and environment
-        switch selectedBackground {
-        case .gray, .white, .black:
-            scene.background.contents = NSColor(named: selectedBackground.rawValue.lowercased())
-        case .grid:
-            scene.background.contents = createGridTexture()
-        case .space:
-            setupSpaceEnvironment(scene)
-        case .forest:
-            setupForestEnvironment(scene)
-        case .mountains:
-            setupMountainEnvironment(scene)
-        case .beach:
-            setupBeachEnvironment(scene)
-        case .city:
-            setupCityEnvironment(scene)
-        default:
-            scene.background.contents = createColoredBackground(.gray.withAlphaComponent(0.3))
-        }
+        // Position camera to see entire dome
+        let distance = Float(diameter) * 2.0
+        cameraNode.position = SCNVector3(distance, distance/2, distance)
+        cameraNode.look(at: SCNVector3(0, 0, 0))
+        scene.rootNode.addChildNode(cameraNode)
         
         return scene
     }
@@ -285,33 +281,24 @@ struct ContentView: View {
     }
     
     private func setupForestEnvironment(_ scene: SCNScene) {
-        // Use panorama for background
-        if let panorama = NSImage(named: "forest_panorama") {
-            scene.background.contents = panorama
-        }
+        // Set the panorama background
+        scene.background.contents = NSImage(named: "forest_panorama")
         
-        // Scale dome to match environment scale
-        if let domeNode = scene.rootNode.childNodes.first {
-            domeNode.scale = SCNVector3(10, 10, 10)
-            domeNode.position = SCNVector3(0, 0, 0)
-        }
+        // Add forest floor at the exact dome base level
+        let ground = SCNPlane(width: 1000, height: 1000)
+        ground.firstMaterial?.diffuse.contents = NSColor(red: 0.2, green: 0.3, blue: 0.1, alpha: 1.0)
+        ground.firstMaterial?.isDoubleSided = true
         
-        // Add directional light
-        let light = SCNNode()
-        light.light = SCNLight()
-        light.light?.type = .directional
-        light.light?.intensity = 800
-        light.position = SCNVector3(50, 50, 50)
-        scene.rootNode.addChildNode(light)
+        let groundNode = SCNNode(geometry: ground)
+        groundNode.eulerAngles.x = -.pi / 2
         
-        // Add ambient light
-        let ambient = SCNNode()
-        ambient.light = SCNLight()
-        ambient.light?.type = .ambient
-        ambient.light?.intensity = 300
-        scene.rootNode.addChildNode(ambient)
+        // Position exactly at the dome's base (y = 0)
+        groundNode.position = SCNVector3(0, 0, 0)
         
-        // Add subtle fog
+        // Add the ground first, then the dome will be added on top
+        scene.rootNode.addChildNode(groundNode)
+        
+        // Add atmospheric fog
         addAtmosphericFog(to: scene, color: .green.withAlphaComponent(0.1))
     }
     
@@ -773,33 +760,44 @@ struct ContentView: View {
         }
     }
 
-    private func setupEnvironment(_ scene: SCNScene, _ environment: Environment) {
-        switch environment.type {
-        case .panorama:
-            // Single 360° panorama image
-            if let panoramaImage = NSImage(named: environment.panorama ?? "") {
-                scene.background.contents = panoramaImage
+    private func setupEnvironment(_ scene: SCNScene, _ environment: Environment?) {
+        if let environment = environment {
+            switch environment.type {
+            case .hdr:
+                setupHDREnvironment(scene)
+            case .panorama:
+                if let panoramaImage = NSImage(named: environment.panorama ?? "") {
+                    scene.background.contents = panoramaImage
+                }
+            case .generated:
+                if environment.name == "Space" {
+                    setupSpaceEnvironment(scene)
+                } else {
+                    // Handle basic colors
+                    if let fogColor = environment.fogColor {
+                        scene.background.contents = NSColor(fogColor)
+                    }
+                }
+            case .skybox:
+                if let front = NSImage(named: "front"),
+                   let back = NSImage(named: "back"),
+                   let left = NSImage(named: "left"),
+                   let right = NSImage(named: "right"),
+                   let top = NSImage(named: "top"),
+                   let bottom = NSImage(named: "bottom") {
+                    scene.background.contents = [right, left, top, bottom, front, back]
+                }
+            case .basic:
+                if let fogColor = environment.fogColor {
+                    scene.background.contents = NSColor(fogColor)
+                }
             }
             
-        case .skybox:
-            // Six-sided cube map
-            scene.background.contents = [
-                NSImage(named: "right"),
-                NSImage(named: "left"),
-                NSImage(named: "top"),
-                NSImage(named: "bottom"),
-                NSImage(named: "front"),
-                NSImage(named: "back")
-            ]
-            
-        case .generated:
-            // Programmatically generated environment
-            if environment.name == "Space" {
-                setupSpaceEnvironment(scene)
+            // Add fog if specified
+            if let fogColor = environment.fogColor {
+                addAtmosphericFog(to: scene, color: NSColor(fogColor))
             }
         }
-        
-        addAtmosphericFog(to: scene, color: environment.fogColor)
     }
 
     // Create a basic panorama programmatically
@@ -822,6 +820,65 @@ struct ContentView: View {
         
         image.unlockFocus()
         return image
+    }
+
+    private func setupHDREnvironment(_ scene: SCNScene) {
+        guard let environment = selectedEnvironment,
+              let environmentMap = NSImage(named: environment.panorama ?? "") else {
+            print("Failed to load HDR environment map")
+            return
+        }
+        
+        // Set the environment map for lighting
+        scene.lightingEnvironment.contents = environmentMap
+        scene.lightingEnvironment.intensity = 2.0
+        
+        // Set the background with adjusted properties
+        scene.background.contents = environmentMap
+        scene.background.intensity = 1.0
+        
+        // Add a non-reflective floor
+        let floor = SCNFloor()
+        floor.reflectivity = 0.0
+        floor.firstMaterial?.diffuse.contents = NSColor.black.withAlphaComponent(0.5)
+        floor.firstMaterial?.roughness.contents = 1.0
+        floor.firstMaterial?.metalness.contents = 0.0
+        let floorNode = SCNNode(geometry: floor)
+        floorNode.position = SCNVector3(0, -CGFloat(diameter) * 0.5, 0)  // Adjusted Y position
+        scene.rootNode.addChildNode(floorNode)
+        
+        // Center the dome
+        if let domeNode = scene.rootNode.childNodes.first {
+            domeNode.position = SCNVector3(0, 0, 0)
+        }
+        
+        // Rotate the scene to better align with environment
+        let rotationAngle = Float.pi * -0.25
+        scene.rootNode.eulerAngles = SCNVector3(0, rotationAngle, 0)
+        
+        // Rest of the lighting setup remains the same
+        let directionalLight = SCNNode()
+        directionalLight.light = SCNLight()
+        directionalLight.light?.type = .directional
+        directionalLight.light?.intensity = 800
+        directionalLight.light?.castsShadow = true
+        directionalLight.position = SCNVector3(x: 0, y: 50, z: 50)
+        directionalLight.eulerAngles = SCNVector3(x: -.pi/3, y: .pi/4, z: 0)
+        scene.rootNode.addChildNode(directionalLight)
+        
+        let ambientLight = SCNNode()
+        ambientLight.light = SCNLight()
+        ambientLight.light?.type = .ambient
+        ambientLight.light?.intensity = 400
+        scene.rootNode.addChildNode(ambientLight)
+    }
+
+    private func toggleColor(_ color: ChakraColor) {
+        if selectedColors.contains(color) {
+            selectedColors.remove(color)
+        } else {
+            selectedColors.insert(color)
+        }
     }
 }
 
@@ -869,6 +926,30 @@ struct VertexKey: Hashable {
         self.x = round(Float(vector.x) * precision) / precision
         self.y = round(Float(vector.y) * precision) / precision
         self.z = round(Float(vector.z) * precision) / precision
+    }
+}
+
+struct ColorToggleButton: View {
+    let color: ChakraColor
+    let isSelected: Bool
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            VStack {
+                Circle()
+                    .fill(color.color)
+                    .frame(width: 30, height: 30)
+                    .overlay(
+                        Circle()
+                            .stroke(Color.white, lineWidth: isSelected ? 3 : 0)
+                    )
+                Text(color.name)
+                    .font(.caption)
+                    .multilineTextAlignment(.center)
+            }
+        }
+        .buttonStyle(PlainButtonStyle())
     }
 }
 
