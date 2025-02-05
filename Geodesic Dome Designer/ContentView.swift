@@ -17,7 +17,7 @@ typealias PlatformColor = NSColor
 #endif
 
 struct ContentView: View {
-    @State private var diameter: Double = 12.0  // Starting with 12 inches
+    @State private var diameter: Double = 12.0  // Starting with 12 inches (no conversion needed now)
     @State private var frequency: Int = 2
     @State private var selectedColors: Set<ChakraColor> = []
     @State private var showDome: Bool = false
@@ -37,15 +37,20 @@ struct ContentView: View {
         ChakraColor(name: "Heart (Green)", color: .green),
         ChakraColor(name: "Solar Plexus (Yellow)", color: .yellow),
         ChakraColor(name: "Sacral (Orange)", color: .orange),
-        ChakraColor(name: "Root (Red)", color: .red),
-        // Additional colors
+        ChakraColor(name: "Root (Red)", color: .red)
+    ]
+    
+    let additionalColors: [ChakraColor] = [
         ChakraColor(name: "Sky Blue", color: .init(red: 0.4, green: 0.7, blue: 1.0)),
         ChakraColor(name: "Rose Pink", color: .pink),
         ChakraColor(name: "Emerald", color: .init(red: 0.0, green: 0.8, blue: 0.6)),
         ChakraColor(name: "Gold", color: .init(red: 1.0, green: 0.84, blue: 0.0)),
         ChakraColor(name: "Silver", color: .init(red: 0.75, green: 0.75, blue: 0.75)),
         ChakraColor(name: "Turquoise", color: .init(red: 0.25, green: 0.88, blue: 0.82)),
-        ChakraColor(name: "Lavender", color: .init(red: 0.9, green: 0.8, blue: 1.0))
+        ChakraColor(name: "Lavender", color: .init(red: 0.9, green: 0.8, blue: 1.0)),
+        ChakraColor(name: "Tan", color: .init(red: 0.82, green: 0.71, blue: 0.55)),
+        ChakraColor(name: "Brown", color: .init(red: 0.6, green: 0.4, blue: 0.2)),
+        ChakraColor(name: "Dark Grey", color: .init(red: 0.3, green: 0.3, blue: 0.3))
     ]
     
     enum BackgroundStyle: String, CaseIterable {
@@ -106,10 +111,27 @@ struct ContentView: View {
         VStack {
             Form {
                 Section(header: Text("Dome Properties")) {
-                    Slider(value: $diameter, in: 6...24, step: 1) {
-                        Text("Diameter: \(Int(diameter)) feet")
+                    Slider(value: $diameter, in: 2...48, step: 0.5) {
+                        Text("Diameter: \(String(format: "%.1f", diameter)) inches")
                     }
-                    Stepper("Frequency: \(frequency)", value: $frequency, in: 2...6)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Frequency")
+                            .padding(.bottom, 2)
+                        HStack(spacing: 8) {
+                            ForEach(2...6, id: \.self) { value in
+                                Button(action: {
+                                    frequency = value
+                                }) {
+                                    Text("\(value)")
+                                        .frame(maxWidth: .infinity)
+                                        .padding(.vertical, 8)
+                                        .background(frequency == value ? Color.blue : Color.gray.opacity(0.2))
+                                        .foregroundColor(frequency == value ? .white : .primary)
+                                        .cornerRadius(8)
+                                }
+                            }
+                        }
+                    }
                 }
                 
                 Section(header: Text("Environment")) {
@@ -139,18 +161,33 @@ struct ContentView: View {
                 }
                 
                 Section(header: Text("Colors")) {
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack {
+                    VStack(spacing: 20) {
+                        // Chakra Colors Row
+                        HStack(spacing: 25) {
                             ForEach(chakraColors) { chakraColor in
                                 ColorToggleButton(
                                     color: chakraColor,
                                     isSelected: selectedColors.contains(chakraColor),
-                                    action: { toggleColor(chakraColor) }
+                                    action: { toggleColor(chakraColor) },
+                                    isChakraColor: true
                                 )
                             }
                         }
-                        .padding(.horizontal)
+                        .padding(.top, 10)
+                        
+                        // Additional Colors Row
+                        HStack(spacing: 25) {
+                            ForEach(additionalColors) { chakraColor in
+                                ColorToggleButton(
+                                    color: chakraColor,
+                                    isSelected: selectedColors.contains(chakraColor),
+                                    action: { toggleColor(chakraColor) },
+                                    isChakraColor: false
+                                )
+                            }
+                        }
                     }
+                    .padding(.horizontal)
                 }
             }
             
@@ -194,27 +231,21 @@ struct ContentView: View {
                     }
                     
                     Section {
-                        HStack {
-                            Button(action: {
+                        HStack(spacing: 20) {
+                            Button("Generate Dome") {
                                 showDome = true
-                            }) {
-                                Text("Generate Dome")
-                                    .frame(maxWidth: .infinity)
-                                    .foregroundColor(.white)
                             }
-                            .disabled(selectedColors.count < 2)
-                            .listRowBackground(selectedColors.count < 2 ? Color.gray : Color.blue)
+                            .buttonStyle(.generate)
+                            .frame(maxWidth: .infinity)
                             
-                            Button(action: {
+                            Button("Reset") {
                                 showDome = false
                                 selectedColors.removeAll()
-                            }) {
-                                Text("Reset")
-                                    .frame(maxWidth: .infinity)
-                                    .foregroundColor(.white)
                             }
-                            .listRowBackground(Color.red)
+                            .buttonStyle(ResetButtonStyle())
+                            .frame(maxWidth: .infinity)
                         }
+                        .padding(.horizontal)
                     }
                 }
                 .frame(maxWidth: 600)  // Limit form width for better readability
@@ -1004,6 +1035,7 @@ struct ColorToggleButton: View {
     let color: ChakraColor
     let isSelected: Bool
     let action: () -> Void
+    let isChakraColor: Bool
     
     var body: some View {
         Button(action: action) {
@@ -1021,6 +1053,46 @@ struct ColorToggleButton: View {
             }
         }
         .buttonStyle(PlainButtonStyle())
+    }
+}
+
+struct GenerateButtonStyle: ButtonStyle {
+    @State private var isHovered = false
+    
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .padding()
+            .background(configuration.isPressed ? Color.blue : Color.blue.opacity(isHovered ? 0.7 : 0.8))
+            .foregroundColor(.white)
+            .cornerRadius(10)
+            .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
+            .onHover { hovering in
+                isHovered = hovering
+            }
+            .animation(.easeInOut(duration: 0.2), value: configuration.isPressed)
+            .animation(.easeInOut(duration: 0.2), value: isHovered)
+    }
+}
+
+extension ButtonStyle where Self == GenerateButtonStyle {
+    static var generate: GenerateButtonStyle { .init() }
+}
+
+struct ResetButtonStyle: ButtonStyle {
+    @State private var isHovered = false
+    
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .padding()
+            .background(configuration.isPressed ? Color.red : Color.red.opacity(isHovered ? 0.7 : 0.8))
+            .foregroundColor(.white)
+            .cornerRadius(10)
+            .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
+            .onHover { hovering in
+                isHovered = hovering
+            }
+            .animation(.easeInOut(duration: 0.2), value: configuration.isPressed)
+            .animation(.easeInOut(duration: 0.2), value: isHovered)
     }
 }
 
