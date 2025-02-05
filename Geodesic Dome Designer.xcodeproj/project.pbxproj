@@ -7,6 +7,23 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0C4409A52D53AEF30007BCBC /* lakeside_4k.hdr in Resources */ = {isa = PBXBuildFile; fileRef = 0C4409A42D53AEF30007BCBC /* lakeside_4k.hdr */; };
+		0C4409A72D53AEFB0007BCBC /* neurathen_rock_castle_4k.hdr in Resources */ = {isa = PBXBuildFile; fileRef = 0C4409A62D53AEFB0007BCBC /* neurathen_rock_castle_4k.hdr */; };
+		0C4409A92D53AF010007BCBC /* noon_grass_4k.hdr in Resources */ = {isa = PBXBuildFile; fileRef = 0C4409A82D53AF010007BCBC /* noon_grass_4k.hdr */; };
+		0C4409AB2D53AF0B0007BCBC /* spaichingen_hill_4k.hdr in Resources */ = {isa = PBXBuildFile; fileRef = 0C4409AA2D53AF0B0007BCBC /* spaichingen_hill_4k.hdr */; };
+		0C4409AD2D53AF120007BCBC /* rosendal_plains_1_4k.hdr in Resources */ = {isa = PBXBuildFile; fileRef = 0C4409AC2D53AF120007BCBC /* rosendal_plains_1_4k.hdr */; };
+		0C4409AF2D53AF180007BCBC /* table_mountain_2_puresky_4k.hdr in Resources */ = {isa = PBXBuildFile; fileRef = 0C4409AE2D53AF180007BCBC /* table_mountain_2_puresky_4k.hdr */; };
+		0C4409B12D53AF1E0007BCBC /* snowy_forest_path_02_4k.hdr in Resources */ = {isa = PBXBuildFile; fileRef = 0C4409B02D53AF1E0007BCBC /* snowy_forest_path_02_4k.hdr */; };
+		0C4409B32D53AF250007BCBC /* spiaggia_di_mondello_4k.hdr in Resources */ = {isa = PBXBuildFile; fileRef = 0C4409B22D53AF250007BCBC /* spiaggia_di_mondello_4k.hdr */; };
+		0C4409B52D53AF340007BCBC /* cobblestone_street_night_4k 2.hdr in Resources */ = {isa = PBXBuildFile; fileRef = 0C4409B42D53AF340007BCBC /* cobblestone_street_night_4k 2.hdr */; };
+		0C4409B72D53AF430007BCBC /* kloofendal_48d_partly_cloudy_puresky_4k.hdr in Resources */ = {isa = PBXBuildFile; fileRef = 0C4409B62D53AF430007BCBC /* kloofendal_48d_partly_cloudy_puresky_4k.hdr */; };
+		0C4409B92D53AF490007BCBC /* symmetrical_garden_02_4k 2.hdr in Resources */ = {isa = PBXBuildFile; fileRef = 0C4409B82D53AF490007BCBC /* symmetrical_garden_02_4k 2.hdr */; };
+		0C4409BB2D53AF4E0007BCBC /* alps_field_4k 2.hdr in Resources */ = {isa = PBXBuildFile; fileRef = 0C4409BA2D53AF4E0007BCBC /* alps_field_4k 2.hdr */; };
+		0C4409BD2D53AF530007BCBC /* autumn_field_puresky_4k 2.hdr in Resources */ = {isa = PBXBuildFile; fileRef = 0C4409BC2D53AF530007BCBC /* autumn_field_puresky_4k 2.hdr */; };
+		0C4409BF2D53AF5A0007BCBC /* qwantani_dusk_2_4k 2.hdr in Resources */ = {isa = PBXBuildFile; fileRef = 0C4409BE2D53AF5A0007BCBC /* qwantani_dusk_2_4k 2.hdr */; };
+		0C4409C12D53AF600007BCBC /* rogland_clear_night_4k 2.hdr in Resources */ = {isa = PBXBuildFile; fileRef = 0C4409C02D53AF600007BCBC /* rogland_clear_night_4k 2.hdr */; };
+		0C4409C32D53AF690007BCBC /* pretoria_gardens_4k 2.hdr in Resources */ = {isa = PBXBuildFile; fileRef = 0C4409C22D53AF690007BCBC /* pretoria_gardens_4k 2.hdr */; };
+		0C4409C52D53AF720007BCBC /* qwantani_moonrise_4k 2.hdr in Resources */ = {isa = PBXBuildFile; fileRef = 0C4409C42D53AF720007BCBC /* qwantani_moonrise_4k 2.hdr */; };
 		0C6134642D52848300A00E6F /* forest_cave_4k.hdr in Resources */ = {isa = PBXBuildFile; fileRef = 0C6134632D52848300A00E6F /* forest_cave_4k.hdr */; };
 		0C6134682D529ACD00A00E6F /* autumn_forest_01_4k.hdr in Resources */ = {isa = PBXBuildFile; fileRef = 0C6134672D529ACD00A00E6F /* autumn_forest_01_4k.hdr */; };
 /* End PBXBuildFile section */
@@ -32,6 +49,23 @@
 		0C1471D72D4BD0390046510D /* Geodesic Dome Designer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Geodesic Dome Designer.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		0C1471E82D4BD03A0046510D /* Geodesic Dome DesignerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Geodesic Dome DesignerTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		0C1471F22D4BD03A0046510D /* Geodesic Dome DesignerUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Geodesic Dome DesignerUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		0C4409A42D53AEF30007BCBC /* lakeside_4k.hdr */ = {isa = PBXFileReference; lastKnownFileType = file; path = lakeside_4k.hdr; sourceTree = "<group>"; };
+		0C4409A62D53AEFB0007BCBC /* neurathen_rock_castle_4k.hdr */ = {isa = PBXFileReference; lastKnownFileType = file; path = neurathen_rock_castle_4k.hdr; sourceTree = "<group>"; };
+		0C4409A82D53AF010007BCBC /* noon_grass_4k.hdr */ = {isa = PBXFileReference; lastKnownFileType = file; path = noon_grass_4k.hdr; sourceTree = "<group>"; };
+		0C4409AA2D53AF0B0007BCBC /* spaichingen_hill_4k.hdr */ = {isa = PBXFileReference; lastKnownFileType = file; path = spaichingen_hill_4k.hdr; sourceTree = "<group>"; };
+		0C4409AC2D53AF120007BCBC /* rosendal_plains_1_4k.hdr */ = {isa = PBXFileReference; lastKnownFileType = file; path = rosendal_plains_1_4k.hdr; sourceTree = "<group>"; };
+		0C4409AE2D53AF180007BCBC /* table_mountain_2_puresky_4k.hdr */ = {isa = PBXFileReference; lastKnownFileType = file; path = table_mountain_2_puresky_4k.hdr; sourceTree = "<group>"; };
+		0C4409B02D53AF1E0007BCBC /* snowy_forest_path_02_4k.hdr */ = {isa = PBXFileReference; lastKnownFileType = file; path = snowy_forest_path_02_4k.hdr; sourceTree = "<group>"; };
+		0C4409B22D53AF250007BCBC /* spiaggia_di_mondello_4k.hdr */ = {isa = PBXFileReference; lastKnownFileType = file; path = spiaggia_di_mondello_4k.hdr; sourceTree = "<group>"; };
+		0C4409B42D53AF340007BCBC /* cobblestone_street_night_4k 2.hdr */ = {isa = PBXFileReference; lastKnownFileType = file; path = "cobblestone_street_night_4k 2.hdr"; sourceTree = "<group>"; };
+		0C4409B62D53AF430007BCBC /* kloofendal_48d_partly_cloudy_puresky_4k.hdr */ = {isa = PBXFileReference; lastKnownFileType = file; path = kloofendal_48d_partly_cloudy_puresky_4k.hdr; sourceTree = "<group>"; };
+		0C4409B82D53AF490007BCBC /* symmetrical_garden_02_4k 2.hdr */ = {isa = PBXFileReference; lastKnownFileType = file; path = "symmetrical_garden_02_4k 2.hdr"; sourceTree = "<group>"; };
+		0C4409BA2D53AF4E0007BCBC /* alps_field_4k 2.hdr */ = {isa = PBXFileReference; lastKnownFileType = file; path = "alps_field_4k 2.hdr"; sourceTree = "<group>"; };
+		0C4409BC2D53AF530007BCBC /* autumn_field_puresky_4k 2.hdr */ = {isa = PBXFileReference; lastKnownFileType = file; path = "autumn_field_puresky_4k 2.hdr"; sourceTree = "<group>"; };
+		0C4409BE2D53AF5A0007BCBC /* qwantani_dusk_2_4k 2.hdr */ = {isa = PBXFileReference; lastKnownFileType = file; path = "qwantani_dusk_2_4k 2.hdr"; sourceTree = "<group>"; };
+		0C4409C02D53AF600007BCBC /* rogland_clear_night_4k 2.hdr */ = {isa = PBXFileReference; lastKnownFileType = file; path = "rogland_clear_night_4k 2.hdr"; sourceTree = "<group>"; };
+		0C4409C22D53AF690007BCBC /* pretoria_gardens_4k 2.hdr */ = {isa = PBXFileReference; lastKnownFileType = file; path = "pretoria_gardens_4k 2.hdr"; sourceTree = "<group>"; };
+		0C4409C42D53AF720007BCBC /* qwantani_moonrise_4k 2.hdr */ = {isa = PBXFileReference; lastKnownFileType = file; path = "qwantani_moonrise_4k 2.hdr"; sourceTree = "<group>"; };
 		0C6134632D52848300A00E6F /* forest_cave_4k.hdr */ = {isa = PBXFileReference; lastKnownFileType = file; path = forest_cave_4k.hdr; sourceTree = "<group>"; };
 		0C6134672D529ACD00A00E6F /* autumn_forest_01_4k.hdr */ = {isa = PBXFileReference; lastKnownFileType = file; path = autumn_forest_01_4k.hdr; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -105,6 +139,23 @@
 			children = (
 				0C6134632D52848300A00E6F /* forest_cave_4k.hdr */,
 				0C6134672D529ACD00A00E6F /* autumn_forest_01_4k.hdr */,
+				0C4409A42D53AEF30007BCBC /* lakeside_4k.hdr */,
+				0C4409A62D53AEFB0007BCBC /* neurathen_rock_castle_4k.hdr */,
+				0C4409A82D53AF010007BCBC /* noon_grass_4k.hdr */,
+				0C4409AA2D53AF0B0007BCBC /* spaichingen_hill_4k.hdr */,
+				0C4409AC2D53AF120007BCBC /* rosendal_plains_1_4k.hdr */,
+				0C4409AE2D53AF180007BCBC /* table_mountain_2_puresky_4k.hdr */,
+				0C4409B02D53AF1E0007BCBC /* snowy_forest_path_02_4k.hdr */,
+				0C4409B22D53AF250007BCBC /* spiaggia_di_mondello_4k.hdr */,
+				0C4409B42D53AF340007BCBC /* cobblestone_street_night_4k 2.hdr */,
+				0C4409B62D53AF430007BCBC /* kloofendal_48d_partly_cloudy_puresky_4k.hdr */,
+				0C4409B82D53AF490007BCBC /* symmetrical_garden_02_4k 2.hdr */,
+				0C4409BA2D53AF4E0007BCBC /* alps_field_4k 2.hdr */,
+				0C4409BC2D53AF530007BCBC /* autumn_field_puresky_4k 2.hdr */,
+				0C4409BE2D53AF5A0007BCBC /* qwantani_dusk_2_4k 2.hdr */,
+				0C4409C02D53AF600007BCBC /* rogland_clear_night_4k 2.hdr */,
+				0C4409C22D53AF690007BCBC /* pretoria_gardens_4k 2.hdr */,
+				0C4409C42D53AF720007BCBC /* qwantani_moonrise_4k 2.hdr */,
 			);
 			path = Environments;
 			sourceTree = "<group>";
@@ -231,6 +282,23 @@
 			files = (
 				0C6134682D529ACD00A00E6F /* autumn_forest_01_4k.hdr in Resources */,
 				0C6134642D52848300A00E6F /* forest_cave_4k.hdr in Resources */,
+				0C4409BB2D53AF4E0007BCBC /* alps_field_4k 2.hdr in Resources */,
+				0C4409AB2D53AF0B0007BCBC /* spaichingen_hill_4k.hdr in Resources */,
+				0C4409AF2D53AF180007BCBC /* table_mountain_2_puresky_4k.hdr in Resources */,
+				0C4409A72D53AEFB0007BCBC /* neurathen_rock_castle_4k.hdr in Resources */,
+				0C4409A92D53AF010007BCBC /* noon_grass_4k.hdr in Resources */,
+				0C4409B72D53AF430007BCBC /* kloofendal_48d_partly_cloudy_puresky_4k.hdr in Resources */,
+				0C4409BD2D53AF530007BCBC /* autumn_field_puresky_4k 2.hdr in Resources */,
+				0C4409C32D53AF690007BCBC /* pretoria_gardens_4k 2.hdr in Resources */,
+				0C4409BF2D53AF5A0007BCBC /* qwantani_dusk_2_4k 2.hdr in Resources */,
+				0C4409C52D53AF720007BCBC /* qwantani_moonrise_4k 2.hdr in Resources */,
+				0C4409C12D53AF600007BCBC /* rogland_clear_night_4k 2.hdr in Resources */,
+				0C4409B32D53AF250007BCBC /* spiaggia_di_mondello_4k.hdr in Resources */,
+				0C4409A52D53AEF30007BCBC /* lakeside_4k.hdr in Resources */,
+				0C4409B12D53AF1E0007BCBC /* snowy_forest_path_02_4k.hdr in Resources */,
+				0C4409B52D53AF340007BCBC /* cobblestone_street_night_4k 2.hdr in Resources */,
+				0C4409AD2D53AF120007BCBC /* rosendal_plains_1_4k.hdr in Resources */,
+				0C4409B92D53AF490007BCBC /* symmetrical_garden_02_4k 2.hdr in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

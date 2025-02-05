@@ -50,7 +50,9 @@ struct ContentView: View {
         ChakraColor(name: "Lavender", color: .init(red: 0.9, green: 0.8, blue: 1.0)),
         ChakraColor(name: "Tan", color: .init(red: 0.82, green: 0.71, blue: 0.55)),
         ChakraColor(name: "Brown", color: .init(red: 0.6, green: 0.4, blue: 0.2)),
-        ChakraColor(name: "Dark Grey", color: .init(red: 0.3, green: 0.3, blue: 0.3))
+        ChakraColor(name: "Dark Grey", color: .init(red: 0.3, green: 0.3, blue: 0.3)),
+        ChakraColor(name: "White", color: .white),
+        ChakraColor(name: "Black", color: .black)
     ]
     
     enum BackgroundStyle: String, CaseIterable {
@@ -91,7 +93,7 @@ struct ContentView: View {
     static let environments: [Environment] = [
         // Basic colored backgrounds with horizon
         Environment(name: "Light Studio", type: .basic, panorama: nil, fogColor: .white.opacity(0.1)),
-        Environment(name: "Dark Studio", type: .basic, panorama: nil, fogColor: Color(red: 0.1, green: 0.1, blue: 0.1).opacity(0.8)),
+        Environment(name: "Dark Studio", type: .basic, panorama: nil, fogColor: .black.opacity(0.1)),
         Environment(name: "Blue Studio", type: .basic, panorama: nil, fogColor: Color(red: 0.4, green: 0.6, blue: 1.0).opacity(0.2)),
         Environment(name: "Purple Studio", type: .basic, panorama: nil, fogColor: Color(red: 0.5, green: 0.3, blue: 0.8).opacity(0.2)),
         Environment(name: "Gold Studio", type: .basic, panorama: nil, fogColor: Color(red: 1.0, green: 0.84, blue: 0.0).opacity(0.2)),
@@ -99,6 +101,23 @@ struct ContentView: View {
         // HDR Environments
         Environment(name: "Forest Cave", type: .hdr, panorama: "forest_cave_4k", fogColor: nil),
         Environment(name: "Autumn Forest", type: .hdr, panorama: "autumn_forest_01_4k", fogColor: nil),
+        Environment(name: "Peaceful Lake", type: .hdr, panorama: "lakeside_4k", fogColor: nil),
+        Environment(name: "Castle Ruins", type: .hdr, panorama: "neurathen_rock_castle_4k", fogColor: nil),
+        Environment(name: "Sunny Meadow", type: .hdr, panorama: "noon_grass_4k", fogColor: nil),
+        Environment(name: "Rolling Hills", type: .hdr, panorama: "spaichingen_hill_4k", fogColor: nil),
+        Environment(name: "Open Plains", type: .hdr, panorama: "rosendal_plains_1_4k", fogColor: nil),
+        Environment(name: "Mountain Vista", type: .hdr, panorama: "table_mountain_2_puresky_4k", fogColor: nil),
+        Environment(name: "Winter Forest", type: .hdr, panorama: "snowy_forest_path_02_4k", fogColor: nil),
+        Environment(name: "Mediterranean Beach", type: .hdr, panorama: "spiaggia_di_mondello_4k", fogColor: nil),
+        Environment(name: "Medieval Street", type: .hdr, panorama: "cobblestone_street_night_4k 2", fogColor: nil),
+        Environment(name: "Cloudy Plains", type: .hdr, panorama: "kloofendal_48d_partly_cloudy_puresky_4k", fogColor: nil),
+        Environment(name: "Garden Terrace", type: .hdr, panorama: "symmetrical_garden_02_4k 2", fogColor: nil),
+        Environment(name: "Alpine Meadow", type: .hdr, panorama: "alps_field_4k 2", fogColor: nil),
+        Environment(name: "Autumn Field", type: .hdr, panorama: "autumn_field_puresky_4k 2", fogColor: nil),
+        Environment(name: "African Dusk", type: .hdr, panorama: "qwantani_dusk_2_4k 2", fogColor: nil),
+        Environment(name: "Night Sky", type: .hdr, panorama: "rogland_clear_night_4k 2", fogColor: nil),
+        Environment(name: "Garden Path", type: .hdr, panorama: "pretoria_gardens_4k 2", fogColor: nil),
+        Environment(name: "Moonrise", type: .hdr, panorama: "qwantani_moonrise_4k 2", fogColor: nil),
         
         // Special Environments
         Environment(name: "Space", type: .generated, panorama: nil, fogColor: .black.opacity(0.8)),
